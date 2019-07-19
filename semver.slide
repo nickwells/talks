@@ -1,0 +1,124 @@
+Semantic Version Numbers
+a brief introduction for Gophers
+17 Jul 2019
+
+Nick Wells
+Consultant
+@nickgwells
+https://github.com/nickwells
+
+* Semantic versioning
+
+Semantic versioning is a formal way of describing different versions of a
+piece of software. It gives a way of interpreting the different versions and
+what you should expect of different versions.
+
+There's a specification at [[https://semver.org]] (yes, it has a semantic
+version number: 2.0.0). It's only 4 pages including an introduction and a
+FAQ.
+
+* Go modules and Semantic versioning
+
+The new (as of `go1.11`) module system in `Go` expects a module to have an
+associated semantic version number assigned in the VCS (`git` or whatever)
+
+A module is a collection of Go packages which are versioned together.
+
+`GO111MODULE=on`
+
+It will be on by default from v1.13
+
+It is on by default if you are working outside of the GOPATH
+
+* What does a semantic version look like
+
+`v1.2.3-pre-rel.id+build.id`
+
+The leading `v` is strictly speaking optional, the semantic versioning spec
+does not mention it but the `Go` tools require it.
+
+* The parts of a semantic version
+
+there are:
+- the major version
+- the minor version
+- the patch version
+- the pre-release IDs
+- the build IDs
+
+* a minimal semantic version number
+
+Every semantic version number must have three parts: the major, minor and
+patch version and then optionally either one or both of the sets of IDs
+
+* the major version
+
+The first part is the major version. Increment this if you are making a
+breaking change to the API.
+
+Major version of zero is special:
+
+"Major version zero (0.y.z) is for initial development. Anything may change
+at any time. The public API should not be considered stable."
+
+For a Go module, if you have a major version number greater than 1 then you
+must have a /vN at the end of your import path in the `go.mod` file where N
+is the major version number. If you don't have this then the Go module system
+treats your code as not following semantic versioning.
+
+* the minor version
+
+The second part is the minor version. Increment this if you have extended the
+public API or deprecated some interface.
+
+* the patch version
+
+The third part is the patch version. Increment this if the only change is
+backwards compatible bugfixes.
+
+* the pre-release IDs
+
+If a semantic version has pre-release IDs then these indicate that the
+version is unstable and may not satisfy the compatibility requirements
+indicated by the version number. You can make breaking changes between one
+pre-release and the next.
+
+* the build IDs
+
+You can include build meta data in your semantic version with a list of build
+IDs. These have no impact on version precedence.
+
+* Go tooling and semantic versions
+
+`go list -m -u all`
+
+* what is a "breaking change"
+
+It's not necessarily just a change in the API that stops the code from compiling.
+
+You are lucky if it does - those are the easy ones
+
+* Hyrum's law
+
+With a sufficient number of users of an API,
+it does not matter what you promise in the contract:
+all observable behaviors of your system
+will be depended on by somebody.
+
+* some tools to help you
+
+github.com/nickwells/semvertools
+
+- semversort will correctly sort semantic version numbers
+- semverincr will increment the different parts of a semantic version number
+- semvercheck allows you to confirm that a semantic version number is well formed
+
+* libraries for parsing semantic version numbers
+
+the semver tools all use github.com/nickwells/semver.mod/semver but other
+packages are available
+
+github.com/rogpeppe/go-internal/semver is a package that Roger Peppe has
+extracted from internal packages from the Go standard library. Note that this
+implies that the internal library allows for missing minor and patch
+numbers. Please don't do this.
