@@ -1,0 +1,521 @@
+Panic!
+When and how to use panic
+29 Jul 2019
+
+Nick Wells
+Twitter: @nickgwells
+https://github.com/nickwells
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic
+- what happens in your program when you call panic
+- how to control what gets shown when you panic
+- how to interpret what gets shown (with examples)
+- how to regain control after a panic
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* The basics
+
+- Panic is a mechanism for handling runtime errors where the only sensible response is to exit
+- It will show where the problem happened
+- Your program will exit
+- If you don't want to exit, call recover()
+- Never call recover()
+
+#==========================================================================
+* That's it!
+
+Thank you very much.
+Goodnight
+
+: - seriously if you don't remember anything else, those are the key lessons
+
+#==========================================================================
+* panic in Go
+
+panic is
+- a built-in function taking one argument of type interface{}
+- used by the runtime and the standard library to report errors that can't be caught at compile time
+- you can use it in your code
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic
+- how to control what gets shown when you panic
+- how to interpret what gets shown (with examples)
+- how to regain control after a panic
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+
+#==========================================================================
+* what happens when you panic?
+
+1 - Execution of the current function stops
+
+: - no more code from the body of the function will be called
+: - any return values from the panicking function are lost even if they are named values that had been set before the panic occurs (unless you recover)
+
+
+#==========================================================================
+* what happens when you panic?
+
+1 - Execution of the current function stops
+2 - Any deferred functions are run
+
+: - deferred functions are called in the reverse order they were deferred
+: - only those functions defered before the call to panic are called
+: - only deferred functions set in the current goroutine are called. This is sensible behaviour but don't expect all your stacks to be unwound. Cleanup only happens in the panicking goroutine
+: - if you panic in one of the deferred functions the original panic value is replaced with the new value
+
+
+#==========================================================================
+* what happens when you panic?
+
+1 - Execution of the current function stops
+2 - Any deferred functions are run
+3 - The panic is reported
+
+: - Reporting means printing "panic: " and the panic value.
+: - Then it prints the stack from the point where the panic occurred
+: - Note that the panic is written out to stderr not stdout so if you're capturing the output be sure to capture both stderr and stdout
+
+
+#==========================================================================
+* what happens when you panic?
+
+1 - Execution of the current function stops
+2 - Any deferred functions are run
+3 - The panic is reported
+4 - The program exits
+
+: - the exit status is 2 in go1.13
+: - there is a suggestion that it should be changed to 1 because an exit status of 2 should mean "misuse of shell builtins" according to the Linux Documentation Project advice given in Appendix E of the Advanced Bash Scripting Guide
+: - a programmer can call os.Exit with an exit status of 2 so don't rely on this to mean you've panicked but if it's not 2 then you haven't panicked (unless the value gets changed)
+
+#==========================================================================
+* What happens if I panic when I'm already panicking?
+
+If one of your deferred functions itself calls panic()
+
+- The value that any subsequent call to recover will return is replaced with the new panic value
+- The new panic location is added to the stack and will be reported in addition to the original panic location
+
+: - The default panic behaviour knows about all the panic values and will report them along with details about any that have been recovered.
+: - The recover func only gives you the last value.
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic
+- how to interpret what gets shown (with examples)
+- how to regain control after a panic
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* Showing more (or less) detail about the program when we panic
+
+You can control how much information gets generated by setting the GOTRACEBACK environment variable
+
+: - GOTRACEBACK=none will suppress the goroutine stack traces completely
+: - GOTRACEBACK=single (the default) will print a stack trace for just the panic'ing goroutine ignoring internal runtime functions
+: - GOTRACEBACK=all will behave as for single but will report on all user-created goroutines not just the panicking one
+: - GOTRACEBACK=system will behave as for all but will also show runtime-created goroutines and internal runtime functions
+: - GOTRACEBACK=crash will behave as for system but will also generate a core-dump
+: - the environment variable value is read at program startup so you can't change it at runtime
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples)
+- how to regain control after a panic
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* what does the stack trace show me
+
+It shows, for each stack frame:
+- The function being called, with the first ten parameter values
+- The file name and the line number
+
+And, with the right setting of GOTRACEBACK it will also show you:
+- The pointer to the stack frame of the calling function
+- The pointer to the current stack frame
+- the program counter
+
+Let's see an example.
+
+: - with GOTRACEBACK set to system or crash you get the stack pointers too
+
+#==========================================================================
+* example 1
+
+.code -numbers src/example1/main.go /START OMIT/,/END OMIT/
+
+
+#==========================================================================
+* panic output from example 1
+
+    ./example1 flag redefined: f
+    panic: ./example1 flag redefined: f
+    
+    goroutine 1 [running]:
+    flag.(*FlagSet).Var(0xc000056180, 0x4ecba0, 0xc00001c118, 0x4d1c7b, 0x1, 0x4d1e17, 0x4)
+    	/usr/local/go/src/flag/flag.go:848 +0x4ae
+    flag.(*FlagSet).IntVar(...)
+    	/usr/local/go/src/flag/flag.go:647
+    flag.(*FlagSet).Int(0xc000056180, 0x4d1c7b, 0x1, 0x2, 0x4d1e17, 0x4, 0xc00001c110)
+    	/usr/local/go/src/flag/flag.go:660 +0x8b
+    flag.Int(...)
+    	/usr/local/go/src/flag/flag.go:667
+    main.main()
+    	/home/ngw/go.presentations/presentations/panic/src/example1/main.go:14 +0xb2
+
+  
+: - The calls to flag.Int and flag.(*FlagSet).IntVar have no parameters shown (just elipses). This is because they have been inlined.
+: - The func flag.(*FlagSet).Int takes the same arguments as flag.Int but there is an extra 'parameter' at the end - this is the return value (a pointer to an int)
+
+#==========================================================================
+* panic output from example 1 with GOTRACEBACK set to system
+
+    ./example1 flag redefined: f
+    panic: ./example1 flag redefined: f
+    
+    goroutine 1 [running]:
+    panic(0x4acf20, 0xc000078250)
+    	/usr/local/go/src/runtime/panic.go:722 +0x2c2 fp=0xc000080e00 sp=0xc000080d70 pc=0x429d42
+    flag.(*FlagSet).Var(0xc00009e120, 0x4ecba0, 0xc000098018, 0x4d1c7b, 0x1, 0x4d1e17, 0x4)
+    	/usr/local/go/src/flag/flag.go:848 +0x4ae fp=0xc000080ec0 sp=0xc000080e00 pc=0x49950e
+    flag.(*FlagSet).IntVar(...)
+    	/usr/local/go/src/flag/flag.go:647
+    flag.(*FlagSet).Int(0xc00009e120, 0x4d1c7b, 0x1, 0x2, 0x4d1e17, 0x4, 0xc000098010)
+    	/usr/local/go/src/flag/flag.go:660 +0x8b fp=0xc000080f10 sp=0xc000080ec0 pc=0x49903b
+    flag.Int(...)
+    	/usr/local/go/src/flag/flag.go:667
+    main.main()
+    	/home/ngw/go.presentations/presentations/panic/src/example1/main.go:14 +0xb2 fp=0xc000080f60 sp=0xc000080f10 pc=0x49a342
+    runtime.main()
+    	/usr/local/go/src/runtime/proc.go:203 +0x21e fp=0xc000080fe0 sp=0xc000080f60 pc=0x42ba8e
+    runtime.goexit()
+    	/usr/local/go/src/runtime/asm_amd64.s:1357 +0x1 fp=0xc000080fe8 sp=0xc000080fe0 pc=0x453ec1
+    
+      
+    goroutine 2 [force gc (idle)]:
+    ...
+
+: - This also shows another goroutine whose stack is omitted to fit on the slide - this is a runtime goroutine that performs the garbage collection
+: - The stack trace also shows the frame pointer, the stack pointer and the program counter
+: - The frame pointer is the stack pointer of the calling func
+: - There are extra functions shown: runtime.goexit calling runtime.main calling main.main and the panic function itself
+
+#==========================================================================
+* example 2
+
+.code -numbers src/example2/main.go /START OMIT/,/END OMIT/
+
+
+#==========================================================================
+* panic output from example 2
+
+    panic: runtime error: integer divide by zero
+    
+    goroutine 1 [running]:
+    main.main()
+    	/home/ngw/go.presentations/presentations/panic/src/example2/main.go:11 +0x11
+
+: - Here we get a runtime error - if you want to search for this error you should exclude the "runtime error: " as that gets added on by the Error() method of the runtime.Error
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples) ✓
+- how to regain control after a panic
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* Help! Something's panicking and I don't want to die
+
+To prevent a panic from exiting your program you need to recover:
+- Set up a deferred function before the panic
+- Have the deferred function call the recover() built-in function.
+
+Any panic will not be propagated further. The function where you have
+recovered will still return after all its defered functions have been called
+
+
+: - Note that the only code that is called after a panic starts is the code in deferred functions and so it's only in a deferred function that it makes sense to call recover().
+: - Any call to recover() not in a deferred function will always return nil and will have no effect.
+
+#==========================================================================
+* I've recovered, what now?
+
+- Test the return value from recover() - this is the value passed to panic()
+- If the return value is non-nil then a panic has occurred and you can try to fix it.
+- A panic might have occurred even if the return value is nil
+
+: - You can call panic with a nil value
+: - Regardless of the panic value, recover will work in the sense that it will end the panic and stop it propagating up the stack
+: - You will get a nil value if you're not panicking so you can't programatically tell that a panic was in progress.
+: - It's probably best not to do this.
+
+#==========================================================================
+* How to recover
+
+like this:
+
+.code src/example3/main.go /STARTf1 OMIT/,/ENDf1 OMIT/
+
+: - Having a defer...recover() in main() is not so useful because main() is already about to return when we get to call recover() and so the program will exit anyway.
+: - If you recover in a function it will return normally.
+: - Unnamed return values will take their zero values
+: - Named return values which have been set prior to the panic will be returned with those values - this is not generally a good thing.
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples) ✓
+- how to regain control after a panic ✓
+- a brief discussion of runtime panics
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* How can I tell if a panic is a runtime error
+
+The value passed to panic by a runtime error satisfies the runtime.Error interface
+so you can test it like this:
+
+
+.code src/example3/main.go /STARTf2 OMIT/,/ENDf2 OMIT/
+
+: - The type actually returned is a runtime.runtimeError which is a string but has methods so that it satisfies the error interface and the runtime.RuntimeError interfaces which is what it needs to satisfy the runtime.Error interface.
+: - Note that the behaviour above loses the stack information from the original panic so you might want to report that as well before re-panicking
+
+#==========================================================================
+* What does the runtime pass to panic
+
+The runtime passes a runtime.runtimeError value. This is a renaming of a
+string but with an Error() method so that it satisfies the error interface
+and a RuntimeError() method (which does nothing) so that it satisfies the
+runtime.Error interface. This means you can distinguish it as an error
+specifically from the runtime.
+
+If you want to do something similar you can define something like this
+(assuming that your package name is mypkg)
+
+  type Error interface {
+      error
+      MypkgError()
+  }
+  
+  type errorString string
+  
+  func (e errorString) Error() string {
+      return "mypkg error: " + string(e)
+  }
+  
+  func (e errorString) MypkgError() {}
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples) ✓
+- how to regain control after a panic ✓
+- a brief discussion of runtime panics ✓
+- some advice on when and how you should panic
+- some advice on when and how you should recover
+
+#==========================================================================
+* Should you ever panic?
+
+Yes
+
+#==========================================================================
+* When should you panic?
+
+When something happens at runtime that is an unrecoverable programming error.
+
+You want the program to exit giving details of where the mistake was made.
+
+: - Ideally you would panic as soon as the program starts up - either in an init function or early in main().
+: - If there is nothing sensible that a caller of your function can do with an error except exit then you should panic - you're giving the programmer useful information about the mistake made.
+: - As seen earlier, the flag package will panic if the same flag is used twice. Similarly the regexp.MustCompile func will panic if the regular expression doesn't compile.
+
+#==========================================================================
+* What should you pass to panic?
+
+- A simple string will be fine most of the time.
+- An error might be appropriate
+- Don't pass nil.
+
+: - If you pass nil you won't be able to tell by the return value from recover() whether or not you were panicking.
+
+
+#==========================================================================
+* Why shouldn't you use panic and recover as an exception mechanism
+
+It's a form of non-local goto. To find out what your program will do after a
+call to panic you need to examine the whole calling stack.
+
+You are forcing any users of your package to use recover with all the
+attendant problems.
+
+Go already has a way of reporting errors
+
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples) ✓
+- how to regain control after a panic ✓
+- a brief discussion of runtime panics ✓
+- some advice on when and how you should panic ✓
+- some advice on when and how you should recover
+
+#==========================================================================
+* When should you recover?
+
+- Never
+
+: - If panic is being used correctly it means that some irrecoverable situation has occured so you want your program to exit.
+: - The default behaviour gives you lots of useful information to help you find out where the problem is happening
+
+#==========================================================================
+* When should you recover?
+
+- Never (almost)
+
+: - If you're getting the panic from some package that is misusing panic as an exception mechanism then you will need to recover.
+: - Java and C++ programmers, we're looking at you
+
+#==========================================================================
+* When should you recover?
+
+- Never (almost)
+- In tests
+
+: - When you're testing whether your code calls panic correctly you'll need to recover and examine the panic value.
+
+
+#==========================================================================
+* Recovery tips
+
+For when you really, really must recover and carry on
+
+: - A big problem with a function that has recovered is that it returns with no indication that anything was wrong
+: - The return values from a function with unnamed return values which has recovered from a panic are always the defaults: numbers are zero, bools are false, strings are empty, errors are nil etc.
+: - so...
+
+
+#==========================================================================
+* Recovery tips
+
+- Don't have return values from recovering functions
+
+: - if you have no return values you can't misinterpret them
+
+#==========================================================================
+* Recovery tips
+
+- Don't have return values from recovering functions
+- If you must have return values, have one of them a bool which you set explicitly to true when you return normally. This can indicate that the values are good to use.
+
+: - The default value for a bool is false. It's only default values that you can get with functions having unnamed return values
+: - This is similar to the behaviour when you extract a value from a map, the optional second return value will be set to false if the key did not refer to a pre-existing value
+
+#==========================================================================
+* Recovery tips
+
+- Don't have return values from recovering functions
+- If you must have return values, have one of them a bool which you set explicitly to true when you return normally. This can indicate that the values are good to use.
+- The best approach, I think, is to give the return values names and set them explicitly when you recover. Like this:
+
+  ...
+  func xxx() (i int, s string, err error)
+  {
+      defer func() {
+          if p := recover(); p != nil {
+              i = 0
+              s = ""
+              err = errors.New("panic detected")
+              fmt.Println("Panic - recovered:", p)
+          }
+      }()
+  ...
+
+: - This is why passing a nil value to panic is so dangerous - you can't recover properly even if you want to as recover() can't tell that a panic is in progress.
+
+
+#==========================================================================
+* What I'll be covering
+
+- what is panic ✓
+- what happens in your program when you call panic ✓
+- how to control what gets shown when you panic ✓
+- how to interpret what gets shown (with examples) ✓
+- how to regain control after a panic ✓
+- a brief discussion of runtime panics ✓
+- some advice on when and how you should panic ✓
+- some advice on when and how you should recover ✓
+- bonus material
+
+#==========================================================================
+* A modest proposal
+
+A new recover function should be added to the language:
+
+  func recoverAll() []interface{}
+
+This should return a slice containing all the panic values (empty if no panic
+has occurred); including nil values and panics from deferred functions.
+
+This will allow us to detect a panic even if the panic value has been set to
+nil and we gain access to the full stack of panic values rather than just the
+last.
+
+: - you test to see if you have panicked by checking the length of the slice
+: - an empty slice will always mean that no panic has occurred
+: - the current recover() should then be deprecated
+
+#==========================================================================
+* For more details
+
+These slides are available at github.com/nickwells/presentations/panic
+
+You can read the speaker's notes on the slide deck
+
+You'll also find there some example programs and a small program that
+demonstrates how panic behaves. You can use this to play around with
+recovering and not recovering, with panicking during a panic and see the
+different behaviour of functions with named and unnamed return values.
