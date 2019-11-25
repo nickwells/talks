@@ -36,7 +36,7 @@ const indent = "   "
 var callPanic = true
 var panicInF2Defer bool
 var recoverType = "none"
-var panicStartFunc = sf_none
+var panicStartFunc = sf_unnamed
 var panicValType = "string"
 
 var panicVal interface{}
