@@ -10,12 +10,7 @@ import (
 // Created: Fri Sep  6 17:06:55 2019
 
 func main() {
-	// f1()
-	// f2()
-	// f3()
-	// f4()
 	f5()
-	safeCall(f99, "f99")
 	safeCall(f98, "f98")
 	safeCall(f97, "f97")
 }
@@ -31,8 +26,8 @@ func safeCall(f func() (int, error), name string) {
 	fmt.Println(name, "- no panic, returned: ", x, err)
 }
 
-// f1
-func f1() {
+// exPanicString
+func exPanicString() {
 	// START-recover OMIT
 	defer func() {
 		if p := recover(); p != nil {
@@ -62,20 +57,20 @@ func f2() {
 	println(x)
 }
 
-// f3
-func f3() {
-	// STARTf3 OMIT
+// exRecover
+func exRecover() {
+	// STARTexRecover OMIT
 	defer func() {
 		if p := recover(); p != nil {
 			fmt.Println("Panic - recovered:", p) // this is never run
 		}
 	}()
 	panic(nil)
-	// ENDf3 OMIT
+	// ENDexRecover OMIT
 }
 
-// f4
-func f4() {
+// exPanicErr
+func exPanicErr() {
 	defer func() {
 		if p := recover(); p != nil {
 			fmt.Println("Panic - recovered:", p)
@@ -85,6 +80,19 @@ func f4() {
 	// START-panic-err OMIT
 	panic(errors.New("Whoops!"))
 	// END-panic-err OMIT
+}
+
+// exPanicInt
+func exPanicInt() {
+	defer func() {
+		if p := recover(); p != nil {
+			fmt.Println("Panic - recovered:", p)
+		}
+	}()
+
+	// START-panic-int OMIT
+	panic(42)
+	// END-panic-int OMIT
 }
 
 // START-type-assertion OMIT
@@ -104,29 +112,6 @@ func f5() {
 }
 
 // END-type-assertion OMIT
-
-// f99
-// START-panic-behaviour OMIT
-func f99() (int, error) {
-	defer func() {
-		fmt.Println("deferred function 1")
-	}()
-	defer func() {
-		fmt.Println("deferred function 2")
-	}()
-
-	fmt.Println("About to panic")
-	panic(errors.New("Whoops!"))
-	fmt.Println("Just panicked") // nolint: unreachable
-
-	defer func() {
-		fmt.Println("deferred function 3")
-	}()
-
-	return 99, nil
-}
-
-// END-panic-behaviour OMIT
 
 type Error string
 
