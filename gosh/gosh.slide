@@ -1,6 +1,6 @@
 # gosh
 Go at the command line
-10 Sep 2022
+10 Feb 2023
 
 Nick Wells
 @nickgwells
@@ -386,6 +386,13 @@ To install gosh
 
 ```
 go install github.com/nickwells/utilities/gosh@latest
+```
+
+For the standard snippets
+
+```
+go install github.com/nickwells/utilities/gosh.snippet@latest
+gosh.snippet -to $HOME/.config/github.com/nickwells/utilities/gosh/snippets -install
 ```
 
 Some tips for using gosh can be found at <https://nickwells.github.io/GoRecipes/gosh.html>
