@@ -363,7 +363,8 @@ Pros:
 - you just have the code you want to run
 - none of the scaffolding (go.mod, go.sum, main.go, the directory and the executable)
 - the ratio of "interesting" code to scaffolding is higher than in a standard program
-
+- the code that will run is immediately visible in the place you run it
+- you automatically run with the latest versions of packages and the language
 
 // ==========================================================================
 ## Pros and cons of scripting
@@ -373,7 +374,8 @@ Cons:
 - you need Go installed for your script to run
 - you need goimports installed (there are ways around this)
 - you need gosh itself installed
-
+- with a compiled binary you fix the behaviour; it won't change as packages change
+- a compiled binary will execute faster
 
 // ==========================================================================
 ## For more details
