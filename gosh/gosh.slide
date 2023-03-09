@@ -51,7 +51,9 @@ You can bolt these together in a pipeline to filter out the unwanted detail
 ## Going further
 
 Sometimes you need to do more than you can achieve with simple
-tools. You need to write a program.
+tools.
+
+You need to write a program.
 
 : With a program you can
 : - show just parts of lines under specific circumstances
@@ -66,52 +68,66 @@ For the problem we've been describing you need small, very short-lived programs
 : Micro-programs, just a few lines long
 
 // ==========================================================================
-## Writing tiny programs is easy...
+## Writing micro-programs is easy...
 
 in the **shell**
 
-```
-$ echo $((6*7))
-```
-// ==========================================================================
-## Writing tiny programs is easy...
+<br>
 
 ```
-$ echo $((6*7))
+echo $((6*7))
+```
+// ==========================================================================
+## Writing micro-programs is easy...
+
+<br>
+
+```
+echo $((6*7))
 ```
 
 or **python**
 
+<br>
+
 ```
-$ python3 -c 'print(6*7)'
+python3 -c 'print(6*7)'
 ```
 
 // ==========================================================================
-## Writing tiny programs is easy...
+## Writing micro-programs is easy...
+
+<br>
 
 ```
-$ echo $((6*7))
-$ python3 -c 'print(6*7)'
+echo $((6*7))
+python3 -c 'print(6*7)'
 ```
 or **perl**
 
+<br>
+
 ```
-$ perl -e 'print(6*7,"\n")'
+perl -e 'print(6*7,"\n")'
 ```
 
 // ==========================================================================
-## Writing tiny programs is easy...
+## Writing micro-programs is easy...
+
+<br>
 
 ```
-$ echo $((6*7))
-$ python3 -c 'print(6*7)'
-$ perl -e 'print(6*7,"\n")'
+echo $((6*7))
+python3 -c 'print(6*7)'
+perl -e 'print(6*7,"\n")'
 ```
 
 But not in **Go**
 
 // ==========================================================================
 ## In Go it's a lot more work
+
+<br>
 
 You can't do it in a single line
 
@@ -153,7 +169,7 @@ func main(){fmt.Println(6*7)}' > $t
 ```
 
 : You need at least
-: - a package line,
+: - a package statement,
 : - an import statement
 : - and a main function
 
@@ -161,7 +177,6 @@ func main(){fmt.Println(6*7)}' > $t
 ## In Go it's a lot more work
 
 <br>
-
 
 ```
 t=$(tempfile -s .go)
@@ -238,11 +253,16 @@ rm $t
 - **Would you switch to Go if you'd started writing something in another language?**
 
 
+// ==========================================================================
+## gosh to the rescue
+
+.image _images/gosh.png
+
 
 // ==========================================================================
-## Gosh to the rescue
+## gosh to the rescue
 
-With gosh you can write a minimal Go program directly at the command line:
+With gosh you can write a micro-program in Go at the command line:
 
 <br>
 
@@ -256,12 +276,11 @@ gosh -e 'fmt.Println(6*7)'
 : if you're more familiar with the python way -c does the same thing
 
 // ==========================================================================
-## Gosh to the rescue
+## gosh to the rescue
 
 or, because we print things a lot:
 
 <br>
-
 
 ```
 gosh -pln '6*7'
@@ -273,21 +292,59 @@ gosh -pln '6*7'
 : similarly, -p calls fmt.Print
 : and -pf calls fmt.Printf
 
-// ==========================================================================
-## gosh can help with other common tasks too
 
-Printing the lines in named files
+// ==========================================================================
+## installing gosh
+
+<br>
 
 ```
-gosh -n -pln '_l.Text()' -- file1 file2
-gosh -n -e 'if len(_l.Text()) > 80 {' -pln '_l.Text()' -e '}' -- file1 file2
+go install github.com/nickwells/utilities/gosh@latest
+```
+
+// ==========================================================================
+## Using gosh as a filter
+
+Returning to the original problem, you can use gosh as a filter, reading from
+its standard input.
+
+<br>
+
+```
+gosh -n -e 'if len(_l.Text()) > 80 {' -pln '_l.Text()' -e '}'
 ```
 
 : The -n parameter places the code in a loop.
 : It reads each line into a bufio.Scanner
-: either from STDIN or, as here, from listed files
+: either from STDIN or from listed files
 :
 : Note the use of the _l variable. Internal gosh variables all start with an underscore
+:
+: To see all the variables gosh might use:
+: gosh -help-notes 'Gosh - var*'
+
+
+// ==========================================================================
+## Using gosh as a filter
+
+When you are reading from a log file line-by-line you often want to
+split the line into parts.
+Gosh can do this automatically with the **split-line** (or **s**) parameter.
+
+<br>
+
+```
+gosh -s -e 'if _lp[3] == "Target" {' -pln '_l.Text()' -e '}'
+```
+
+: The -s parameter automatically splits the line into parts.
+: It splits on whitespace by default.
+:
+: Note that you don't need to give the -n parameter, it is assumed
+: if you are splitting lines
+:
+: Note the use of the _l variable. Internal gosh variables all start
+: with an underscore
 :
 : To see all the variables gosh might use:
 : gosh -help-notes 'Gosh - var*'
@@ -298,7 +355,7 @@ gosh -n -e 'if len(_l.Text()) > 80 {' -pln '_l.Text()' -e '}' -- file1 file2
 Examining values
 
 ```
-gosh -e 'ctx := context.WithValue(context.Background(), "key", 42); pretty.Print(ctx)'
+gosh -e 'ctx := context.WithValue(context.Background(), "key", 42); pretty.Println(ctx)'
 ```
 
 : Note that the 'pretty' package is not in the standard library
@@ -324,7 +381,7 @@ gosh -pf '"%+9o\n", 42'
 // ==========================================================================
 ## gosh can help with other common tasks too
 
-Running a simple web-server
+Running a simple web-server with the **http** parameter
 
 <br>
 
@@ -332,19 +389,216 @@ Running a simple web-server
 gosh -http -web-pf '"Gosh Time: %s", time.Now()'
 ```
 
+: By default, this will listen on port 8080 but you can change this with the
+: -http-port parameter
+
 // ==========================================================================
-## And lots more...
+## gosh can help with other common tasks too
 
-gosh can:
-- automatically split lines into pieces
-- can edit files in place
-- can load in snippet files of pre-written code
-- can run as a shebang interpretter
+Editing files in place with the **in-place-edit** (or **i**) parameter
 
+<br>
+
+```
+gosh -in-place-edit \
+     -sp '"' \
+     -e 'if len(_lp) == 3 && _lp[0] != "import "{' \
+     -w-p '_lp[0],`"` \
+     -w-p 'strings.ToUpper(_lp[1])' \
+     -w-pln '`"`, _lp[2]' \
+     -e ' } else { ' \
+     -w-pln '_l.Text()' \
+     -e ' }' -- filename
+```
+
+You can use the **findCmpRm** command (from the same Repository
+as gosh) to check the results.
+
+: This will edit the file replacing it with the new text being
+: written using the -w-p parameters.
+:
+: The -sp parameter sets a new split pattern. If you give this
+: parameter you don't need to give the -s parameter; it is
+: assumed.
+:
+: The original file is preserved in a copy with the same name
+: plus a '.orig' suffix
+:
+: If the given file does not exist it will fail, similarly if
+: there is already a .orig backup for the file
+
+// ==========================================================================
+## gosh as a shebang interpretter
+
+.code _code/hello
+
+: Note that Linux takes everything after the interpretter name as a single
+: parameter and so only the -shebang parameter can be given on the shebang
+: line
+:
+: Note the difficulties of having gosh installed in different locations
+: on different OSs
+
+// ==========================================================================
+## Snippets
+
+There are some bits of code that you write again and again.
+
+
+// ==========================================================================
+## Snippets
+
+There are some bits of code that you write again and again.
+
+<br>
+
+```
+if err != nil {
+   fmt.Println(err)
+   os.Exit(1)
+}
+```
+
+// ==========================================================================
+## Snippets
+
+There are some bits of code that you write again and again.
+
+<br>
+
+```
+if err != nil {
+   fmt.Println(err)
+   os.Exit(1)
+}
+```
+
+With gosh you can replace this with
+
+<br>
+
+```
+gosh -e '_, err := os.Open("nosuchfile")' -e-s iferr
+```
+
+// ==========================================================================
+## Snippets - webserver timeout
+
+If you don't want your webserver to run indefinitely you can use the abort
+snippet to shut it down after a set length of time.
+
+<br>
+
+```
+gosh -http -web-pf '"Gosh Time: %s", time.Now()' -g-s abort
+```
+
+: This will automatically exit the program after GOSH_TTL seconds
+
+// ==========================================================================
+## Snippets - listing what is available
+
+You can see all the snippets available with the **snippet-list** parameter
+
+<br>
+
+```
+gosh -snippet-list
+```
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+There are several standard snippets provided with gosh.
+These can be installed using the gosh.snippet command
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+There are several standard snippets provided with gosh.
+These can be installed using the gosh.snippet command
+
+You can install the gosh.snippet command as follows:
+
+<br>
+
+```
+go install github.com/nickwells/utilities/gosh.snippet@latest
+```
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+There are several standard snippets provided with gosh.
+These can be installed using the gosh.snippet command
+You can install the gosh.snippet command as follows:
+
+<br>
+
+```
+go install github.com/nickwells/utilities/gosh.snippet@latest
+```
+
+To install the standard snippets, choose where to put them
+
+<br>
+
+```
+gosh -snippet-list-dir
+```
+
+and then install them:
+
+<br>
+
+```
+gosh.snippet -to <dir> -action install
+```
+
+: - gosh will search for snippets in a number of standard
+:   directories and you can see what these are with
+:   the snippet-list-dir parameter.
+:
+: - You can add to the list of directories to search with
+:   the snippet-dir parameter
+
+// ==========================================================================
+## Snippets - more details
+
+A snippet file is copied into the script but the comments it contains can be
+meaningful. You can:
+
+- describe what the snippet does and how to use it
+- record which other snippets should be used with it and in what order
+- populate the import statement
+
+: gosh -help-note 'Gosh - snippet comments' will show you documentation for
+: the various semantically meaningful snippet comments
+
+// ==========================================================================
+## What is gosh doing
+
+You can see what gosh is doing using the **verbose** parameter
+
+<br>
+
+```
+gosh -pln '"Hello, World!"' -verbose
+```
+
+
+// ==========================================================================
+## Looking at the generated program
+
+You can keep the generated program using the **keep** parameter
+
+<br>
+
+```
+gosh -pln '"Hello, World!"' -keep
+```
 
 // ==========================================================================
 ## Getting help
-
 
 <br>
 
@@ -352,6 +606,9 @@ gosh can:
 gosh -help
 gosh -help-all
 gosh -help-full
+gosh -help-short
+gosh -help-show examples
+gosh -help-show notes
 ```
 
 : - gosh has a comprehensive user manual with notes and examples
@@ -370,10 +627,10 @@ Pros:
 ## Pros and cons of scripting
 
 Cons:
-- you have the same problem as with other scripting languages
-- you need Go installed for your script to run
-- you need goimports installed (there are ways around this)
+- you have the same problems as with other scripting languages
 - you need gosh itself installed
+- you need Go installed
+- you need goimports or gopls installed (there are ways around this)
 - with a compiled binary you fix the behaviour; it won't change as packages change
 - a compiled binary will execute faster
 
@@ -397,4 +654,7 @@ go install github.com/nickwells/utilities/gosh.snippet@latest
 gosh.snippet -to $HOME/.config/github.com/nickwells/utilities/gosh/snippets -install
 ```
 
-Some tips for using gosh can be found at <https://nickwells.github.io/GoRecipes/gosh.html>
+Some tips for using gosh can be found at
+<https://nickwells.github.io/GoRecipes/gosh.html>
+
+

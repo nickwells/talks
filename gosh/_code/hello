@@ -1,0 +1,7 @@
+#!/home/ngw/go/bin/gosh -shebang
+#
+#gosh.param: I = fmt
+#gosh.param: no-auto-import
+#gosh.param: set-go-cmd=/usr/local/go/bin/go
+
+fmt.Println("Hello, World!")
