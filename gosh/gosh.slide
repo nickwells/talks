@@ -219,6 +219,8 @@ and lastly, tidy up afterwards.
 rm $t
 ```
 
+: you want to get rid of this program as soon as you've finished running it
+: it's a single-use program
 
 // ==========================================================================
 ## Problems with this solution
@@ -343,11 +345,7 @@ gosh -s -e 'if _lp[3] == "Target" {' -pln '_l.Text()' -e '}'
 : Note that you don't need to give the -n parameter, it is assumed
 : if you are splitting lines
 :
-: Note the use of the _l variable. Internal gosh variables all start
-: with an underscore
-:
-: To see all the variables gosh might use:
-: gosh -help-notes 'Gosh - var*'
+: Note the new _lp variable.
 
 // ==========================================================================
 ## gosh can help with other common tasks too
@@ -401,14 +399,11 @@ Editing files in place with the **in-place-edit** (or **i**) parameter
 
 ```
 gosh -in-place-edit \
-     -sp '"' \
-     -e 'if len(_lp) == 3 && _lp[0] != "import "{' \
-     -w-p '_lp[0],`"` \
-     -w-p 'strings.ToUpper(_lp[1])' \
-     -w-pln '`"`, _lp[2]' \
-     -e ' } else { ' \
+     -e 'if strings.HasSuffix(_l.Text(), `/v3/param/paramset"`) { ' \
+     -w-pln 'strings.Replace(_l.Text(), "/v3/", "/v5/", 1)' \
+     -e '} else {' \
      -w-pln '_l.Text()' \
-     -e ' }' -- filename
+     -e '}' -- filename
 ```
 
 You can use the **findCmpRm** command (from the same Repository
@@ -417,9 +412,8 @@ as gosh) to check the results.
 : This will edit the file replacing it with the new text being
 : written using the -w-p parameters.
 :
-: The -sp parameter sets a new split pattern. If you give this
-: parameter you don't need to give the -s parameter; it is
-: assumed.
+: This can be used to change import statements to reflect a
+: major version change
 :
 : The original file is preserved in a copy with the same name
 : plus a '.orig' suffix
