@@ -70,7 +70,7 @@
     -moz-border-radius: 10px;
     -webkit-border-radius: 10px;
 
-    background-color: white;
+    background-color: papayawhip; /* NGW */
 
     border: 1px solid rgba(0, 0, 0, 0.3);
 
@@ -334,8 +334,8 @@ h2 {
 }
 
 h3 {
-  font-size: 30px;
-  line-height: 36px;
+  font-size: 40px; /* NGW */
+  line-height: 46px; /* NGW */
 
   padding: 0;
   margin: 0;
@@ -387,10 +387,12 @@ pre.numbers span:before {
 }
 
 code {
-  font-size: 95%;
+    font-size: 150%; /* NGW */
+    line-height: 150%; /* NGW */
   font-family: 'Droid Sans Mono', 'Courier New', monospace;
 
   color: black;
+  background: white; /* NGW */
 }
 
 article > .image,
