@@ -25,17 +25,16 @@ An example from real life
 // ==========================================================================
 ## Finding and investigating problems
 
-You start out by scrolling through the log files
+Look in the log files
 
-Once you've got some idea of what's important you want to show just
-the interesting bits and not the rest.
+Pull out the interesting bits
 
 : You've got to filter the gold from the grit
+:
+: Catch the fish in the stream
 
 // ==========================================================================
 ## Traditional Unix tools
-
-Start with simple tools
 
 - grep
 - cut
@@ -44,16 +43,15 @@ Start with simple tools
 - uniq
 - sed
 
-You can bolt these together in a pipeline to filter out the unwanted detail
+: You can connect these in a pipeline to just show the relevant detail
 
 
 // ==========================================================================
 ## Going further
 
-Sometimes you need to do more than you can achieve with simple
-tools.
+If you need to do more than these tools allow.
 
-You need to write a program.
+You need a program.
 
 : With a program you can
 : - show just parts of lines under specific circumstances
@@ -63,9 +61,11 @@ You need to write a program.
 // ==========================================================================
 ## How big a program?
 
-For the problem we've been describing you need small, very short-lived programs
+- small
+- very short-lived
 
 : Micro-programs, just a few lines long
+: Run once and thrown away
 
 // ==========================================================================
 ## Writing micro-programs is easy...
@@ -136,7 +136,7 @@ You can't do it in a single line
 
 <br>
 
-You've got to generate a temporary file ...
+**Generate a temporary file**
 
 <br>
 
@@ -158,7 +158,7 @@ t=$(tempfile -s .go)
 ```
 <br>
 
-then write your program into the temporary file ...
+**Write your program into the temporary file**
 
 <br>
 
@@ -187,7 +187,7 @@ func main(){fmt.Println(6*7)}' > $t
 
 <br>
 
-then `go run` it ...
+**Run the program**
 
 <br>
 
@@ -211,7 +211,7 @@ go run $t
 
 <br>
 
-and lastly, tidy up afterwards.
+**tidy up afterwards**
 
 <br>
 
@@ -225,34 +225,12 @@ rm $t
 // ==========================================================================
 ## Problems with this solution
 
-- **it's a lot of typing**
-
-
-// ==========================================================================
-## Problems with this solution
-
 - it's a lot of typing
-- **there are a lot of steps to remember**
+- there are several steps to remember
+- for packages not in the standard library, you need a directory & a go.mod file as well
 
-
-// ==========================================================================
-## Problems with this solution
-
-- it's a lot of typing
-- there are a lot of steps to remember
-- **for packages not in the standard library, you need a directory & a go.mod file as well**
-
-
-// ==========================================================================
-## Given these problems
-
-- **How small a Go program would you write?**
-
-// ==========================================================================
-## Given these problems
-
-- How small a Go program would you write?
-- **Would you switch to Go if you'd started writing something in another language?**
+: How small a Go program would you write?
+: Would you switch to Go if you'd started writing something in another language?
 
 
 // ==========================================================================
@@ -264,7 +242,9 @@ rm $t
 // ==========================================================================
 ## gosh to the rescue
 
-With gosh you can write a micro-program in Go at the command line:
+- gosh lets you write a micro-program
+- in Go
+- at the command line:
 
 <br>
 
@@ -273,14 +253,14 @@ gosh -e 'fmt.Println(6*7)'
 ```
 
 : the -e parameter introduces the code to execute
-: a lot of Unix tools use this (it's sort of a standard)
+: a lot of Unix tools use this parameter (it's sort of a standard)
 :
 : if you're more familiar with the python way -c does the same thing
 
 // ==========================================================================
 ## gosh to the rescue
 
-or, because we print things a lot:
+We print things a lot, so:
 
 <br>
 
@@ -296,7 +276,7 @@ gosh -pln '6*7'
 
 
 // ==========================================================================
-## installing gosh
+## Installing gosh
 
 <br>
 
@@ -310,17 +290,23 @@ go install github.com/nickwells/utilities/gosh@latest
 Returning to the original problem, you can use gosh as a filter, reading from
 its standard input.
 
+Use the **run-in-readloop** (or **n**) parameter.
+
 <br>
 
 ```
-gosh -n -e 'if len(_l.Text()) > 80 {' -pln '_l.Text()' -e '}'
+gosh -n \
+    -e 'if len(_l.Text()) > 80 {' \
+    -pln '_l.Text()' \
+    -e '}'
 ```
 
 : The -n parameter places the code in a loop.
 : It reads each line into a bufio.Scanner
 : either from STDIN or from listed files
 :
-: Note the use of the _l variable. Internal gosh variables all start with an underscore
+: Note the use of the _l variable.
+: Internal gosh variables all start with an underscore
 :
 : To see all the variables gosh might use:
 : gosh -help-notes 'Gosh - var*'
@@ -329,38 +315,42 @@ gosh -n -e 'if len(_l.Text()) > 80 {' -pln '_l.Text()' -e '}'
 // ==========================================================================
 ## Using gosh as a filter
 
-When you are reading from a log file line-by-line you often want to
+Reading from a file line-by-line you often want to
 split the line into parts.
-Gosh can do this automatically with the **split-line** (or **s**) parameter.
+
+Use the **split-line** (or **s**) parameter.
 
 <br>
 
 ```
-gosh -s -e 'if _lp[3] == "Target" {' -pln '_l.Text()' -e '}'
+gosh -s \
+    -e 'if _lp[3] == "Target" {' \
+    -pln '_l.Text()' \
+    -e '}'
 ```
 
 : The -s parameter automatically splits the line into parts.
 : It splits on whitespace by default.
+: The parts are put into the _lp variable
 :
 : Note that you don't need to give the -n parameter, it is assumed
 : if you are splitting lines
-:
-: Note the new _lp variable.
 
 // ==========================================================================
-## gosh can help with other common tasks too
+## Examples
 
 Examining values
 
 ```
-gosh -e 'ctx := context.WithValue(context.Background(), "key", 42); pretty.Println(ctx)'
+gosh -e 'ctx := context.WithValue(context.Background(), "K", 42)' \
+     -e 'pretty.Println(ctx)'
 ```
 
 : Note that the 'pretty' package is not in the standard library
 : It uses github.com/kr/pretty
 
 // ==========================================================================
-## gosh can help with other common tasks too
+## Examples
 
 Quickly exploring Go library behaviour
 
@@ -377,9 +367,11 @@ gosh -pf '"%+9o\n", 42'
 ```
 
 // ==========================================================================
-## gosh can help with other common tasks too
+## Examples
 
-Running a simple web-server with the **http** parameter
+Running a simple web-server.
+
+Use the **http** parameter
 
 <br>
 
@@ -387,30 +379,39 @@ Running a simple web-server with the **http** parameter
 gosh -http -web-pf '"Gosh Time: %s", time.Now()'
 ```
 
+: Here gosh generates the body of an HTTP handler's ServeHTTP method
+:
+: The -web-pf printer writes to the ResponseWriter of the ServeHTTP method
+:
+: You can use the -http-handler parameter to specify a different HTTP handler
+:
 : By default, this will listen on port 8080 but you can change this with the
 : -http-port parameter
+:
 
 // ==========================================================================
-## gosh can help with other common tasks too
+## Examples
 
-Editing files in place with the **in-place-edit** (or **i**) parameter
+Editing files in place.
+
+Use the **in-place-edit** (or **i**) parameter
 
 <br>
 
 ```
-gosh -in-place-edit \
-     -e 'if strings.HasSuffix(_l.Text(), `/v3/param/paramset"`) { ' \
-     -w-pln 'strings.Replace(_l.Text(), "/v3/", "/v5/", 1)' \
-     -e '} else {' \
-     -w-pln '_l.Text()' \
-     -e '}' -- filename
+gosh -i \
+  -e 'if strings.HasSuffix(_l.Text(), `/v3/param/paramset"`) { ' \
+  -w-pln 'strings.Replace(_l.Text(), "/v3/", "/v5/", 1)' \
+  -e '} else {' \
+  -w-pln '_l.Text()' \
+  -e '}' -- filename
 ```
 
 You can use the **findCmpRm** command (from the same Repository
 as gosh) to check the results.
 
-: This will edit the file replacing it with the new text being
-: written using the -w-p parameters.
+: This will edit the file.
+: The new text is written using the -w-p parameters.
 :
 : This can be used to change import statements to reflect a
 : major version change
@@ -422,27 +423,43 @@ as gosh) to check the results.
 : there is already a .orig backup for the file
 
 // ==========================================================================
-## gosh as a shebang interpretter
+## Shebang
 
 .code _code/hello
 
-: Note that Linux takes everything after the interpretter name as a single
-: parameter and so only the -shebang parameter can be given on the shebang
-: line
+: Note that the script as shown (on MacOS) won't run.
+: Highlight the issue with gosh being in different locations on different OSs
 :
-: Note the difficulties of having gosh installed in different locations
-: on different OSs
+: filename: $PresentDir/gosh/_code/hello
+:
+: gosh -i \
+:      -w-pln 'strings.Replace(_l.Text(), "#!/home", "#!/Users", 1)' \
+:      -- ./gosh/_code/hello
+// ==========================================================================
+## Shebang
+
+.code _code/hello2
+
+: The `#gosh.param:` lines allow you to add some extra parameters to gosh.
+:
+: Note that Linux takes everything after the interpreter name as a single
+: parameter so only the -shebang parameter can be given on the shebang line.
+:
+: The added parameters are to run the script with minimal extra commands
+: and to allow it to be run by a user without the Go command in their path.
+:
+: filename: $PresentDir/gosh/_code/hello2
 
 // ==========================================================================
 ## Snippets
 
-There are some bits of code that you write again and again.
+Some fragments of code appear again and again.
 
 
 // ==========================================================================
 ## Snippets
 
-There are some bits of code that you write again and again.
+Some fragments of code appear again and again.
 
 <br>
 
@@ -456,7 +473,7 @@ if err != nil {
 // ==========================================================================
 ## Snippets
 
-There are some bits of code that you write again and again.
+Some fragments of code appear again and again.
 
 <br>
 
@@ -467,27 +484,20 @@ if err != nil {
 }
 ```
 
-With gosh you can replace this with
+gosh lets you replace this with
 
 <br>
 
 ```
-gosh -e '_, err := os.Open("nosuchfile")' -e-s iferr
+gosh -e '_, err := os.Open("nosuchfile")' \
+     -e-s iferr
 ```
 
-// ==========================================================================
-## Snippets - webserver timeout
-
-If you don't want your webserver to run indefinitely you can use the abort
-snippet to shut it down after a set length of time.
-
-<br>
-
-```
-gosh -http -web-pf '"Gosh Time: %s", time.Now()' -g-s abort
-```
-
+: see also web-server timeout with the abort snippet.
 : This will automatically exit the program after GOSH_TTL seconds
+:
+: and the ruler snippet to see more easily the behaviour of the
+: fmt.Printf formatting above
 
 // ==========================================================================
 ## Snippets - listing what is available
@@ -500,31 +510,11 @@ You can see all the snippets available with the **snippet-list** parameter
 gosh -snippet-list
 ```
 
-// ==========================================================================
-## Snippets - installing the standard snippets
-
-There are several standard snippets provided with gosh.
-These can be installed using the gosh.snippet command
 
 // ==========================================================================
 ## Snippets - installing the standard snippets
 
-There are several standard snippets provided with gosh.
-These can be installed using the gosh.snippet command
-
-You can install the gosh.snippet command as follows:
-
-<br>
-
-```
-go install github.com/nickwells/utilities/gosh.snippet@latest
-```
-// ==========================================================================
-## Snippets - installing the standard snippets
-
-There are several standard snippets provided with gosh.
-These can be installed using the gosh.snippet command
-You can install the gosh.snippet command as follows:
+**First install the gosh.snippet command**
 
 <br>
 
@@ -532,20 +522,20 @@ You can install the gosh.snippet command as follows:
 go install github.com/nickwells/utilities/gosh.snippet@latest
 ```
 
-To install the standard snippets, choose where to put them
+: gosh provides some standard snippets which the gosh.snippet command can
+: install for you
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+- Install the gosh.snippet command
+
+**Then choose where to put them**
 
 <br>
 
 ```
 gosh -snippet-list-dir
-```
-
-and then install them:
-
-<br>
-
-```
-gosh.snippet -to <dir> -action install
 ```
 
 : - gosh will search for snippets in a number of standard
@@ -556,10 +546,26 @@ gosh.snippet -to <dir> -action install
 :   the snippet-dir parameter
 
 // ==========================================================================
-## Snippets - more details
+## Snippets - installing the standard snippets
 
-A snippet file is copied into the script but the comments it contains can be
-meaningful. You can:
+- Install the gosh.snippet command
+- Choose where to put them
+
+**Finally install them:**
+
+<br>
+
+```
+gosh.snippet -to <dir> -action install
+```
+
+
+// ==========================================================================
+## Snippets - writing your own
+
+A snippet file is copied into the script so it should be correct Go code
+
+The comments in a snippet can be meaningful. They can:
 
 - describe what the snippet does and how to use it
 - record which other snippets should be used with it and in what order
@@ -591,6 +597,11 @@ You can keep the generated program using the **keep** parameter
 gosh -pln '"Hello, World!"' -keep
 ```
 
+: You might also want to add the following parameters
+:    -format to format the code
+:    -add-comments to add line-by-line comments
+:    -dont-run to stop the command being run; you just want to see the code
+
 // ==========================================================================
 ## Getting help
 
@@ -611,23 +622,39 @@ gosh -help-show notes
 ## Pros and cons of scripting
 
 Pros:
-- you just have the code you want to run
-- none of the scaffolding (go.mod, go.sum, main.go, the directory and the executable)
-- the ratio of "interesting" code to scaffolding is higher than in a standard program
-- the code that will run is immediately visible in the place you run it
-- you automatically run with the latest versions of packages and the language
+- you have just the interesting code
+- and none of the scaffolding
+- the code is immediately visible as you run it
+- you always use the latest versions of everything
 
+: by "scaffolding" I mean
+: - go.mod & go.sum,
+: - main.go with the package name, the imports and the main func,
+: - the directory and the executable
+:
+: - big programs benefit from this but the overhead for a µ-program is excessive
+:
+: - because the code is more concise it's easier to see what's happening
+:
+: by "everything" I mean
+: - the latest version of packages you're using
+: - and the latest version of Go
 // ==========================================================================
 ## Pros and cons of scripting
 
 Cons:
-- you have the same problems as with other scripting languages
-- you need gosh itself installed
-- you need Go installed
-- you need goimports or gopls installed (there are ways around this)
-- with a compiled binary you fix the behaviour; it won't change as packages change
-- a compiled binary will execute faster
+- you need `gosh` installed
+- you need `Go` installed
+- you need `gopls` or `goimports` installed (there are ways around this)
+- a compiled binary doesn't change; a script changes as packages change
+- it's slower
+- it's less portable
 
+: gosh suffers from the same problems as other scripting languages
+:
+: The differences in pathnames for gosh or Go between operating systems
+: means you need to write different versions of scripts (particularly
+: shebang scripts) for different OS's
 // ==========================================================================
 ## For more details
 
