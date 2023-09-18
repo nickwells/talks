@@ -1,0 +1,3 @@
+#!/home/ngw/go/bin/gosh -shebang
+
+fmt.Println("Hello, World!")

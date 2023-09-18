@@ -1,0 +1,5 @@
+i1, i2 := 0, 1
+for i := 0; i < 10; i++ {
+    fmt.Println(i1)
+    i1, i2 = i2, i1+i2
+}

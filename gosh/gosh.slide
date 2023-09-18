@@ -1,0 +1,890 @@
+# gosh
+Go at the command line
+10 Feb 2023
+
+Nick Wells
+@nickgwells
+https://github.com/nickwells
+
+: run this with:
+: present -notes -base $talksDir/theme
+: Make sure you are in the base directory of the talks with gosh as a
+: sub-directory. This will make the sample code easier to run.
+: .
+: Make sure that the talks directory hasn't had any changes made by a
+: previous talk running commands against it.
+: run git restore gosh
+
+// ==========================================================================
+## It began with a question
+
+<br>
+
+: someone asked me, "what just happened?"
+
+// ==========================================================================
+## The answer ...
+
+ ... is in the log files
+
+: There are lots more unimportant lines than important ones
+: - unrelated messages
+: - old debug lines
+: - lots of lines where everything went well
+: - etc
+: .
+: you need to filter out the lines you want
+
+// ==========================================================================
+## Traditional Unix tools
+
+- grep
+- cut
+- less
+- sort
+- uniq
+- sed
+
+: Note that these are all filters - reading from stdin, writing to stdout
+: You can connect these in a pipeline to just show the relevant detail
+
+// ==========================================================================
+## Going further
+
+If you need to do more than these tools allow...
+
+you need a program.
+
+: With a program you can
+: - show just parts of lines under specific circumstances
+: - do some arithmetic on the results
+: - reformat things to make the results easier to understand
+
+// ==========================================================================
+## How big a program?
+
+- very small
+- very short-lived
+- a micro-program
+
+: Micro-programs, just a few lines long
+: Run once and thrown away
+: - you run it, you find the issue and you discard the tool you used
+
+// ==========================================================================
+## Writing micro-programs is easy...
+
+in the **shell**
+
+<br>
+
+```
+echo "Hello, World!"
+```
+
+.image _images/zsh.png 200 200
+
+: In the shell you're always in the REPL loop
+// ==========================================================================
+## Writing micro-programs is easy...
+
+<br>
+
+```
+echo "Hello, World!"
+```
+
+or **python**
+
+<br>
+
+```
+python3 -c 'print("Hello, World!")'
+```
+
+.image _images/python.png 200 200
+
+// ==========================================================================
+## Writing micro-programs is easy...
+
+<br>
+
+```
+echo "Hello, World!"
+python3 -c 'print("Hello, World!")'
+```
+or **perl**
+
+<br>
+
+```
+perl -e 'print("Hello, World!","\n")'
+```
+
+.image _images/perl.svg 200 200
+
+// ==========================================================================
+## Writing micro-programs is easy...
+
+<br>
+
+```
+echo "Hello, World!"
+python3 -c 'print("Hello, World!")'
+perl -e 'print("Hello, World!","\n")'
+```
+
+But not in **Go**
+
+.image _images/Go-Logo_Blue.png 200 200
+.image _images/crying-emoji.png 100 100
+
+: In Go it's a lot more work
+: You can't do it in a single line
+
+// ==========================================================================
+## In Go it's a lot more work
+
+<br>
+
+**Generate a temporary file**
+
+<br>
+
+```
+t=$(mktemp --suffix .go)
+```
+or, on MacOS
+```
+t=$(gmktemp --suffix .go)
+```
+
+.image _images/gopher.png 200 200
+
+: on MacOS you'll need to install coreutils to get gmktemp
+
+// ==========================================================================
+## In Go it's a lot more work
+
+<br>
+
+```
+t=$(mktemp --suffix .go)
+```
+<br>
+
+**Write your program into the temporary file**
+
+<br>
+
+```
+echo 'package main
+import "fmt"
+func main(){fmt.Println("Hello, World!")}' > $t
+```
+
+.image _images/gopher.png 200 200
+
+: You need at least
+: - a package statement,
+: - an import statement
+: - and a main function
+
+// ==========================================================================
+## In Go it's a lot more work
+
+<br>
+
+```
+t=$(mktemp --suffix .go)
+echo 'package main
+import "fmt"
+func main(){fmt.Println("Hello, World!")}' > $t
+```
+
+<br>
+
+**Run the program**
+
+<br>
+
+```
+go run $t
+```
+
+.image _images/gopher.png 200 200
+
+// ==========================================================================
+## In Go it's a lot more work
+
+<br>
+
+```
+t=$(mktemp --suffix .go)
+echo 'package main
+import "fmt"
+func main(){fmt.Println("Hello, World!")}' > $t
+go run $t
+```
+
+<br>
+
+**tidy up afterwards**
+
+<br>
+
+```
+rm $t
+```
+
+.image _images/gopher.png 200 200
+
+: you want to get rid of this program as soon as you've finished running it
+: it's a single-use program
+
+// ==========================================================================
+## Problems with this solution
+
+- it's a lot of typing
+- there are several steps to remember
+- even this is not enough
+
+: for packages not in the std lib, you need a directory & a go.mod/sum file as well
+: How small a Go program would you write?
+: Would you switch to Go if you'd started writing something in another language?
+
+
+// ==========================================================================
+## gosh to the rescue
+
+.image _images/gosh.png 550 550
+
+: gosh allows you to write Go code at the command line
+
+// ==========================================================================
+## Our first gosh micro-program
+
+- gosh lets you write a micro-program
+- in Go
+- at the command line:
+
+<br>
+
+```
+gosh -e 'fmt.Println("Hello, World!")'
+```
+
+: the -e parameter introduces the code to execute
+: a lot of Unix tools use this parameter (it's sort of a standard)
+: .
+: if you're more familiar with the python way -c does the same thing
+
+// ==========================================================================
+## compare the difference
+
+<br>
+
+```
+t=$(mktemp --suffix .go)
+echo 'package main
+import "fmt"
+func main(){fmt.Println("Hello, World!")}' > $t
+go run $t
+rm $t
+```
+<br>
+or
+
+<br>
+
+```
+gosh -e 'fmt.Println("Hello, World!")'
+```
+
+: 6 lines and 117 characters
+: versus
+: 1 line and 39 characters
+: .
+: One third of the typing
+: .
+: The code isn't hidden in a wall of text
+
+// ==========================================================================
+## What next?
+<br>
+: Now we have a simple program
+: It's easy to extend gosh to make more complex programs
+
+// ==========================================================================
+## Helpful parameters
+
+Printing
+<br>
+
+```
+gosh -pln '"Hello, World!"'
+gosh -p '"Hello, World!\n"'
+gosh -pf '"%20s\n", "Hello, World!"'
+```
+
+: We often print things so the -p params simplify that
+: .
+: -pln wraps its arguments in a call to fmt.Println
+: -p uses fmt.Print
+: -pf uses fmt.Printf
+
+// ==========================================================================
+## inserting code from files
+
+To insert a code fragment from a file use the **exec-file** (or **e-f**)
+parameter
+<br>
+
+```
+gosh -e-f gosh/_code/fibonacci
+```
+
+You give the full pathname and it is copied in unchanged.
+
+: An easy way to build a big program is to copy in fragments
+: of code from files
+
+// ==========================================================================
+## copying whole files into the gosh directory
+
+To copy a file  use the **copy-go-file** parameter
+
+<br>
+
+```
+gosh -copy-go-file gosh/_code/fib.go -e 'fib(10)'
+```
+
+: Note that this file can be in another package and will be edited to be in
+: package main
+
+// ==========================================================================
+## Snippets
+
+Some fragments of code appear again and again.
+
+<br>
+
+```
+if err != nil {
+   fmt.Println(err)
+   os.Exit(0)
+}
+```
+
+gosh lets you replace this with the **iferr** snippet and
+the **exec-snippet** parameter (or **e-s**)
+
+<br>
+
+```
+gosh -e '_, err := os.Open("nosuchfile")' \
+     -e-s iferr
+```
+
+// ==========================================================================
+## Snippet benefits
+
+- there's a snippet-PATH so the names are shorter
+- gosh can check that snippets are being used as intended
+- they can be documented
+- they can fill in the imports they use
+
+: Note that there is more discussion of snippets later
+
+// ==========================================================================
+## More helpful parameters: Using gosh as a filter
+
+In the original example we wanted to write a micro-program to
+filter log files
+
+// ==========================================================================
+## More helpful parameters: Using gosh as a filter
+
+What is a filter?
+
+: A program that reads from stdin and writes to stdout
+
+// ==========================================================================
+## More helpful parameters: Using gosh as a filter
+
+For the gosh-made program to work as a filter we need to read
+from standard input and process each line.
+
+Use the **run-in-readloop** (or **n**) parameter.
+
+<br>
+
+```
+gosh -n \
+    -e 'if len(_l.Text()) > 80 {' \
+    -pln '_l.Text()' \
+    -e '}'
+```
+
+: The -n parameter places the code in a loop.
+: It reads each line into a bufio.Scanner
+: either from STDIN or from listed files
+: .
+: Note the use of the _l variable.
+: Internal gosh variables all start with an underscore
+: .
+: To see all the variables gosh might use:
+: gosh -help-notes 'Gosh - var*'
+
+// ==========================================================================
+## More helpful parameters: Using gosh as a filter
+
+Reading from named files
+<br>
+
+```
+gosh -e-s ruler
+gosh -n \
+    -e 'if len(_l.Text()) > 40 {' \
+    -pf '"%-40.40s... Too Long\n", _l.Text()' \
+    -e '} else {' \
+    -pln '_l.Text()' \
+    -e '}' -- gosh/_files/longLines1 gosh/_files/longLines2
+```
+
+: The previous example would read from stdin, this will read from files
+: .
+: The values after -- are passed as arguments to the generated program
+: The program will loop over the arguments and,
+: because we are running in a readloop, it opens each as a file, then
+: reads each line from that file
+: .
+: Note the use of the ruler snippet to print out a ruler
+
+// ==========================================================================
+## Sections of a gosh program
+
+<br>
+
+: Think about the code that will be generated by gosh
+: .
+: There will be a loop over the arguments
+: For each argument the file will be opened
+: There will be a loop over the lines in the file
+: .
+: The exec (or e) parameter inserts code into the innermost loop
+
+// ==========================================================================
+## Sections of a gosh program
+
+gosh splits the code it generates into 6 sections
+
+1. global
+2. before
+3. inner-before
+4. exec
+5. inner-after
+6. after
+
+: gosh allows you to put code into any of these sections
+
+// ==========================================================================
+## Sections of a gosh program
+
+.image _images/gosh-sections.png 550 _
+
+// ==========================================================================
+## Sections of a gosh program - params
+
+For each of the sections there is a parameter to insert code into it
+and associated print, file and snippet parameter variants
+
+// ==========================================================================
+## More helpful parameters: Using gosh as a filter
+
+Reading from a file line-by-line you often want to
+split the line into parts.
+
+Use the **split-line** (or **s**) parameter.
+
+<br>
+
+```
+gosh -s \
+    -e 'if len(_lp) > 3 && _lp[3] == "Target" {' \
+    -pln '_l.Text()' \
+    -e '}'
+```
+
+: The -s parameter automatically splits the line into parts.
+: It splits on whitespace by default.
+: The parts are put into the _lp variable
+: .
+: Note that you don't need to give the -n parameter, it is assumed
+: if you are splitting lines
+
+// ==========================================================================
+## More helpful parameters: Running a simple web-server
+
+Use the **http** parameter
+
+<br>
+
+```
+gosh -http -web-pf '"Time for gosh: %s", time.Now()'
+```
+
+: Here gosh generates the body of an HTTP handler's ServeHTTP method
+: .
+: The -web-pf printer writes to the ResponseWriter of the ServeHTTP method
+: .
+: You can use the -http-handler parameter to specify a different HTTP handler
+: .
+: By default, this will listen on port 8080 but you can change this
+: with the -http-port parameter
+: .
+: Note that the web-server runs forever - mention the abort snippet
+
+// ==========================================================================
+## More helpful parameters: Editing files in place.
+
+Use the **in-place-edit** (or **i**) parameter
+
+<br>
+
+```
+gosh -i \
+     -w-pln 'strings.Replace(_l.Text(),
+          "github.com/nickwells/param.mod/v4/",
+          "github.com/nickwells/param.mod/v5/", 1)' \
+     -- filename
+```
+
+You can use the **findCmpRm** command (from the same Repository
+as gosh) to check the results.
+
+: This will edit the file.
+: The new text is written using the -w-p parameters.
+: .
+: This can be used to change import statements to reflect a
+: major version change
+: .
+: The original file is preserved in a copy with the same name
+: plus a '.orig' suffix
+: .
+: If the given file does not exist it will fail, similarly if
+: there is already a .orig backup for the file
+
+// ==========================================================================
+## Examples: Examining Go package behaviour
+
+<br>
+
+```
+gosh -e 'ctx := context.WithValue(context.Background(), "K", 42)' \
+     -e 'pretty.Println(ctx)'
+```
+
+: Note that the 'pretty' package is not in the standard library
+: It uses github.com/kr/pretty
+: gosh runs go mod tidy so this will be populated in the go.mod file
+: You might need to go get it if you haven't used it before
+
+// ==========================================================================
+## Examples: Exploring formatting
+
+<br>
+
+```
+gosh -pf '"%+4.9X\n", 42'
+gosh -pf '"%+9.4X\n", 42'
+gosh -pf '"%+9.3X\n", 42'
+gosh -pf '"%+9X\n", 42'
+gosh -pf '"%+9x\n", 42'
+gosh -pf '"%+9o\n", 42'
+```
+
+// ==========================================================================
+## Examples: a command-line calculator
+
+<br>
+
+```
+gosh -pln '6*7'
+gosh -pln 'math.Sqrt(2.0)'
+```
+
+: Note that you can use any package here not just math.
+: Try with gonum
+
+// ==========================================================================
+## Shebang
+
+We can use gosh to have shebang scripts written in Go
+
+: We talked earlier about inserting code from a file into the
+: gosh-generated program.
+: .
+: It turns out that's all you need to have shebang scripts in Go
+
+// ==========================================================================
+## Shebang
+
+.code _code/hello
+
+: Note that the shebang parameter is a synonym for the exec-file parameter
+: .
+: Note that the script as shown (on MacOS) won't run.
+: Highlight the issue with gosh being in different locations on different OSs
+: .
+: We can fix this with gosh
+: (when you've got a new hammer everything looks like a nail)
+: .
+: filename: gosh/_code/hello
+
+// ==========================================================================
+## Shebang
+
+.code _code/hello
+
+<br>
+
+```
+gosh -i \
+     -w-pln 'strings.Replace(_l.Text(), "#!/home", "#!/Users", 1)' \
+     -- gosh/_code/hello*
+```
+
+: There are other problems with this code
+: - it needs gopls or goimports installed to populate the import statement
+: - it will try and run one of these and 'go mod tidy' which can be slow
+: - the caller needs the Go command in their PATH
+: .
+: filename: gosh/_code/hello
+// ==========================================================================
+## Shebang
+
+.code _code/hello2
+
+: The `#gosh.param:` lines allow you to add some extra parameters to gosh.
+: .
+: Note that Linux takes everything after the interpreter name as a single
+: parameter so only the -shebang parameter can be given on the shebang line.
+: .
+: The added parameters are to run the script with minimal extra commands
+: and to allow it to be run by a user without the Go command in their path.
+: .
+: filename: gosh/_code/hello2
+
+// ==========================================================================
+## More about snippets
+
+<br>
+
+// ==========================================================================
+## Snippets - listing what is available
+
+You can see all the snippets available with the **snippet-list**
+parameter (or **sl**)
+
+<br>
+
+```
+gosh -sl
+```
+
+: Note that the declared snippet variables all start with double-underscore
+: Recommend this as a standard to follow
+: .
+: Note the location of the standard snippet directory refer to
+: the XDG base directory specification
+: .
+: Note the use of the package name as the subdirectory within
+: the XDG base directory
+: .
+: Note that the snippets listed are from the standard snippets
+
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+**First install the gosh.snippet command**
+
+<br>
+
+```
+go install github.com/nickwells/utilities/gosh.snippet@latest
+```
+
+: gosh provides some standard snippets which the gosh.snippet command can
+: install for you
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+- Install the gosh.snippet command
+
+**Then choose where to put them**
+
+<br>
+
+```
+gosh -snippet-list-dir
+```
+
+: - gosh will search for snippets in a number of standard
+:   directories and you can see what these are with
+:   the snippet-list-dir parameter.
+: .
+: - You can add to the list of directories to search with
+:   the snippet-dir parameter
+
+// ==========================================================================
+## Snippets - installing the standard snippets
+
+- Install the gosh.snippet command
+- Choose where to put them
+
+**Finally install them:**
+
+<br>
+
+```
+gosh.snippet -to <dir> -action install
+```
+
+
+// ==========================================================================
+## Snippets - writing your own
+
+A snippet file is copied into the script so it should be correct Go code
+
+The comments in a snippet can be meaningful. They can:
+
+- describe what the snippet does and how to use it
+- record which other snippets should be used with it and in what order
+- populate the import statement
+
+: gosh -help-note 'Gosh - snippet comments' will show you documentation for
+: the various semantically meaningful snippet comments
+: .
+: Note that the meaningful snippet comments are stripped from the code
+: before it is copied into the gosh-generated program
+
+// ==========================================================================
+## Getting help
+
+<br>
+
+```
+gosh -help
+gosh -help-all
+gosh -help-full
+gosh -help-short
+gosh -help-show examples
+gosh -help-show notes
+```
+
+: - gosh has a comprehensive user manual with notes and examples
+
+// ==========================================================================
+## Pros and cons of scripting
+
+Cons:
+- you need `gosh` installed
+- you need `Go` installed
+- you need `gopls` or `goimports` installed (there are ways around this)
+- a compiled binary doesn't change; a script changes as packages change
+- it's slower
+- it's less portable
+
+: gosh suffers from the same problems as other scripting languages
+: .
+: The differences in pathnames for gosh or Go between operating systems
+: means you need to write different versions of scripts (particularly
+: shebang scripts) for different OS's
+// ==========================================================================
+## Pros and cons of scripting
+
+Pros:
+- you have just the interesting code
+- and none of the scaffolding
+- the code is immediately visible as you run it
+- you always use the latest versions of everything
+
+: by "scaffolding" I mean
+: - go.mod & go.sum,
+: - main.go with the package name, the imports and the main func,
+: - the directory and the executable
+: .
+: big programs benefit from this but the overhead for a µ-program is excessive
+: .
+: because the code is more concise it's easier to see what's happening
+: .
+: by "everything" I mean
+: - the latest version of packages you're using
+: - and the latest version of Go
+
+// ==========================================================================
+## What is gosh doing
+
+The **verbose** parameter makes gosh tell you what's happening
+
+<br>
+
+```
+gosh -e 'fmt.Println("Hello, World!")' -verbose
+```
+
+// ==========================================================================
+## Looking at the generated program
+
+You can keep the generated program using the **keep** parameter
+
+<br>
+
+```
+gosh -e 'fmt.Println("Hello, World!")' -keep \
+     -format \
+     -add-comments \
+     -dont-run
+```
+
+: This skips the cleanup and shows where the code can be found
+: .
+: You only need the -keep parameter
+:    -format formats the code
+:    -add-comments adds line-by-line comments
+:    -dont-run stops the program being run
+
+// ==========================================================================
+## For more details
+
+The slides are available (with notes) at <https://github.com/nickwells/talks/gosh>
+
+To install gosh
+
+```
+go install github.com/nickwells/utilities/gosh@latest
+gosh -pre-check
+```
+It will warn you that the snippets are missing
+
+For the standard snippets
+
+```
+go install github.com/nickwells/utilities/gosh.snippet@latest
+gosh -snippet-list-dir
+gosh.snippet -to <dir> -install
+```
+
+For the auto-importers (you only need one)
+```
+go install golang.org/x/tools/gopls@latest
+go install golang.org/x/tools/cmd/goimports@latest
+```
+
+For some more tips, see <https://nickwells.github.io/GoRecipes/gosh.html>
+
+

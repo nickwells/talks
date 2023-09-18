@@ -1,0 +1,12 @@
+#!/home/ngw/go/bin/gosh -shebang
+#
+#gosh.param: I = fmt
+#gosh.param: no-auto-import
+#gosh.param: no-go-mod-tidy
+#gosh.param: set-go-cmd=/usr/local/go/bin/go
+#gosh.param: set-executable-name = hello2
+#gosh.param: show-filename = false
+#gosh.param: dont-loop-on-args
+#gosh.param: no-more-params
+
+fmt.Println("Hello, World!")
